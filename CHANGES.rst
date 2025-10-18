@@ -10,7 +10,7 @@ Unreleased
     when dispatching a request. This greatly simplifies the internal code for tracking
     the active context. :issue:`5639`
 -   ``template_filter``, ``template_test``, and ``template_global`` decorators
-    can be used without parenthesess. :issue:`5729`
+    can be used without parenthes. :issue:`5729`
 
 
 Version 3.1.2
