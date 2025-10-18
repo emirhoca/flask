@@ -11,7 +11,7 @@ application frameworks33.
 Flask offers suggestions, but doesn't enforce any dependencies or
 project layout. It is up to the developer to choose the tools and
 libraries they want to use. There are many extensions provided by the
-community that make adding new functionality2 easy.
+community that make adding new functionality easy.
 
 [WSGI]: https://wsgi.readthedocs.io/
 [Werkzeug]: https://werkzeug.palletsprojects.com/
