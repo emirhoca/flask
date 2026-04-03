@@ -1,10 +1,15 @@
-name: Tests
+name: Tests (pytest + ezmon)
 on:
   pull_request:
     paths-ignore: ['docs/**', 'README.md']
   push:
     branches: [main, stable]
     paths-ignore: ['docs/**', 'README.md']
+  workflow_dispatch:
+
+env:
+  TESTMON_NET_ENABLED: "true"
+  TESTMON_SERVER: "https://ezmon.aloiz.ch"
 jobs:
   tests:
     name: ${{ matrix.name || matrix.python }}
@@ -49,3 +54,93 @@ jobs:
           path: ./.mypy_cache
           key: mypy|${{ hashFiles('pyproject.toml') }}
       - run: uv run --locked tox run -e typing
+
+  ezmon:
+    name: "pytest --ezmon (NetDB)"
+    runs-on: macos-latest
+    env:
+      PY_VERSION: "3.12"
+      REPO_ID: ${{ github.repository }}
+      JOB_ID: "python-3.12-macos"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PY_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          if [ -f pyproject.toml ] || [ -f setup.py ]; then
+            pip install .
+          else
+            echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
+          fi
+          pip install "git+https://github.com/andreas16700/pytest-testmon@main"
+          pip install pytest-json-report
+
+      - name: Debug ezmon setup
+        run: |
+          pip show pytest-testmon
+          echo "NetDB enabled: $TESTMON_NET_ENABLED"
+          echo "Server: $TESTMON_SERVER"
+          echo "Repo ID: $REPO_ID"
+          echo "Job ID: $JOB_ID"
+
+      - name: Run tests with ezmon (NetDB)
+        run: |
+          # Collect all test nodeids without ezmon filter
+          pytest --collect-only -q --no-header 2>/dev/null \
+            | grep "::" > all-tests.txt || true
+
+          # Run with ezmon + json report
+          pytest --ezmon -v \
+            --json-report \
+            --json-report-file=test-report.json || true
+
+          # Inject deselected tests + commit metadata
+          python3 -c "
+          import json, os
+
+          with open('all-tests.txt') as f:
+              all_tests = [l.strip() for l in f if '::' in l.strip()]
+
+          with open('test-report.json') as f:
+              report = json.load(f)
+
+          ran = {t['nodeid'] for t in report.get('tests', [])}
+          for nodeid in all_tests:
+              if nodeid not in ran:
+                  report['tests'].append({
+                      'nodeid': nodeid,
+                      'outcome': 'deselected',
+                      'duration': 0.0
+                  })
+
+          report['summary']['deselected'] = len(all_tests) - len(ran)
+          report['commit_id'] = os.environ['GITHUB_SHA']
+          report['repo_id'] = os.environ['GITHUB_REPOSITORY']
+
+          with open('test-report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+          "
+
+      - name: Print test report JSON
+        if: always()
+        run: cat test-report.json
+
+      - name: Upload test report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ env.JOB_ID }}-${{ github.sha }}
+          path: test-report.json
