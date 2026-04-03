@@ -90,7 +90,7 @@ jobs:
 
       - name: Debug ezmon setup
         run: |
-          pip show pytest-testmon
+          pip list | grep -i testmon
           echo "NetDB enabled: $TESTMON_NET_ENABLED"
           echo "Server: $TESTMON_SERVER"
           echo "Repo ID: $REPO_ID"
