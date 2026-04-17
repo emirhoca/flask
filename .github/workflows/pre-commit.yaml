@@ -18,10 +18,12 @@ jobs:
       TESTMON_NET_ENABLED: 'true'
       TESTMON_SERVER: "https://ezmon.aloiz.ch"
       REPO_ID: ${{ github.repository }}
-      JOB_ID: "ubuntu-latest-py3.12_new_repo"
+      JOB_ID: "ubuntu-latest-py3.12_new_repo_2"
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python 3.12
       uses: actions/setup-python@v4
