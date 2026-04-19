@@ -53,7 +53,7 @@ def test_from_prefixed_env(monkeypatch):
     monkeypatch.setenv("FLASK_LIST", "[1, 2]")
     monkeypatch.setenv("FLASK_DICT", '{"k": "v"}')
     monkeypatch.setenv("NOT_FLASK_OTHER", "other")
-
+    x=0
     app = flask.Flask(__name__)
     app.config.from_prefixed_env()
 
