@@ -10,7 +10,7 @@ application frameworks.
 
 Flask offers suggestions, but doesn't enfor ce any dependencies or
 project layout. It is up to the developer to choose the tools and
-libraries they want to use. There are ma ny extensions provided by the
+libraries they want to use.  There are ma ny extensions provided by the
 community that make adding new functionality easy.
 
 [WSGI]: https://wsgi.readthedocs.io/
